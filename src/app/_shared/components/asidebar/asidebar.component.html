@@ -1,9 +1,7 @@
 <aside class="h-full w-full bg-primary text-white flex flex-col overflow-hidden">
 	<!-- Marque + repli -->
 	<div class="flex items-center h-16 px-3 flex-shrink-0 gap-3" [class.justify-center]="isCollapsed">
-		<span class="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary-500 text-primary-900 flex-shrink-0">
-			<mat-icon class="!w-5 !h-5 !text-xl">local_activity</mat-icon>
-		</span>
+		<img src="/icon.png" alt="" class="h-9 w-9 rounded-xl object-cover flex-shrink-0" />
 		<div *ngIf="!isCollapsed" class="min-w-0 flex-1">
 			<p class="text-sm font-bold leading-tight truncate">TicketUp</p>
 			<p class="text-[11px] leading-tight text-primary-300">Administration</p>
