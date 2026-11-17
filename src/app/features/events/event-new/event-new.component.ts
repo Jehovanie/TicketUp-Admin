@@ -87,8 +87,8 @@ export class EventNewComponent implements OnInit {
     tickets: Signal<boolean>;
   };
 
-  isCreateNewLocation = false;
-  isCreateNewCategory = false;
+  readonly isCreateNewLocation = signal(false);
+  readonly isCreateNewCategory = signal(false);
 
   /** Passe à `true` à la première tentative d'envoi : on n'accuse pas l'utilisateur avant. */
   readonly submitted = signal(false);
@@ -174,13 +174,13 @@ export class EventNewComponent implements OnInit {
         return start.length === 0 || new Date(end) > new Date(start);
       }),
       location: computed(() =>
-        this.isCreateNewLocation
+        this.isCreateNewLocation()
           ? (this.event.locationName() ?? '').trim().length > 0 &&
             (this.event.locationSize() ?? 0) > 0
           : this.event.locationId() !== null
       ),
       category: computed(() =>
-        this.isCreateNewCategory
+        this.isCreateNewCategory()
           ? (this.event.categoryName() ?? '').trim().length > 0
           : this.event.categoryId() !== null
       ),
@@ -252,7 +252,7 @@ export class EventNewComponent implements OnInit {
 
   /** Capacité du lieu retenu, qu'il soit existant ou en cours de création. */
   readonly venueCapacity = computed<number | null>(() => {
-    if (this.isCreateNewLocation) {
+    if (this.isCreateNewLocation()) {
       return this.event.locationSize();
     }
     const selected = this.locations().find(
@@ -297,14 +297,14 @@ export class EventNewComponent implements OnInit {
 
   /** Bascule « choisir » / « créer » en repartant d'un état propre. */
   toggleCreateLocation() {
-    this.isCreateNewLocation = !this.isCreateNewLocation;
+    this.isCreateNewLocation.update((value) => !value);
     this.event.locationId.set(null);
     this.event.locationName.set(null);
     this.event.locationSize.set(null);
   }
 
   toggleCreateCategory() {
-    this.isCreateNewCategory = !this.isCreateNewCategory;
+    this.isCreateNewCategory.update((value) => !value);
     this.event.categoryId.set(null);
     this.event.categoryName.set(null);
     this.event.categoryColor.set('#3ab7bf');
