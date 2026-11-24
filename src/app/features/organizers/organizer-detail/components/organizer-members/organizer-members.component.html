@@ -128,7 +128,7 @@
               *ngIf="canTransfer(member)"
               type="button"
               (click)="ask(member.userId, 'transfer')"
-              title="Transférer la responsabilité"
+              matTooltip="Transférer la responsabilité" aria-label="Transférer la responsabilité"
               class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-gray-500 hover:bg-primary-50 hover:text-primary-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
               <mat-icon class="!w-5 !h-5 !text-xl">workspace_premium</mat-icon>
@@ -137,7 +137,7 @@
               *ngIf="canRemove(member)"
               type="button"
               (click)="ask(member.userId, 'remove')"
-              title="Retirer de l'organisation"
+              matTooltip="Retirer de l'organisation" aria-label="Retirer de l'organisation"
               class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-gray-500 hover:bg-danger-50 hover:text-danger-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
               <mat-icon class="!w-5 !h-5 !text-xl">person_remove</mat-icon>

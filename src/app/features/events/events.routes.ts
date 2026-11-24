@@ -18,6 +18,10 @@ export const EVENTS_ROUTES: Routes = [
         loadComponent: () => import('./event-detail/event-detail.component').then(m => m.EventDetailComponent)
       },
       {
+        path: ':eventID/edit',
+        loadComponent: () => import('./event-edit/event-edit.component').then(m => m.EventEditComponent)
+      },
+      {
         path: ':eventID/ticket-state',
         loadComponent: () => import('./event-ticket-state/event-ticket-state.component').then(m => m.EventTicketStateComponent)
       }

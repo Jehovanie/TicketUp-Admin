@@ -1,3 +1,4 @@
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions } from '@angular/material/tooltip';
 import {
   ApplicationConfig,
   LOCALE_ID,
@@ -25,5 +26,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, serverErrorInterceptor])),
     { provide: MatPaginatorIntl, useValue: getFrenchPaginatorIntl() },
     { provide: LOCALE_ID, useValue: 'fr' },
+    // Léger délai à l'apparition : une infobulle instantanée clignote au simple passage de la souris.
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: { showDelay: 300, hideDelay: 0, position: 'below', touchendHideDelay: 1500 } satisfies MatTooltipDefaultOptions,
+    },
   ],
 };

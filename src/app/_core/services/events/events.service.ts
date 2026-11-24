@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environements/environement';
 import { AppService } from '../AppService';
-import { IApiResponse, IEvent, IEventStatusDetail, IPaginated } from '../../model';
+import { IApiResponse, IEvent, IEventFilters, IUpdateEventPayload, IEventStatusDetail, IPaginated } from '../../model';
 import { map, Observable } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 
@@ -23,11 +23,10 @@ export class EventsService extends AppService {
    */
   getAllEvents(
     page = 1,
-    itemsPerPage = DEFAULT_EVENTS_PER_PAGE
+    itemsPerPage = DEFAULT_EVENTS_PER_PAGE,
+    filters: IEventFilters = {}
   ): Observable<IPaginated<IEvent>> {
-    const params = new HttpParams()
-      .set('page', page)
-      .set('itemsPerPage', itemsPerPage);
+    const params = this.listParams(page, itemsPerPage, filters);
 
     return this.get<IApiResponse<IPaginated<IEvent>>>('/events', params).pipe(
       map((response) => response.data)
@@ -47,19 +46,31 @@ export class EventsService extends AppService {
    */
   getMyEvents(
     page = 1,
-    itemsPerPage = DEFAULT_EVENTS_PER_PAGE
+    itemsPerPage = DEFAULT_EVENTS_PER_PAGE,
+    filters: IEventFilters = {}
   ): Observable<IPaginated<IEvent>> {
     if (this.auth.isSuperAdmin()) {
-      return this.getAllEvents(page, itemsPerPage);
+      return this.getAllEvents(page, itemsPerPage, filters);
     }
 
-    const params = new HttpParams()
-      .set('page', page)
-      .set('itemsPerPage', itemsPerPage);
+    const params = this.listParams(page, itemsPerPage, filters);
 
     return this.get<IApiResponse<IPaginated<IEvent>>>('/events/me', params).pipe(
       map((response) => response.data)
     );
+  }
+
+  /**
+   * Pagination + filtres en query string. Un filtre vide n'est pas envoyé :
+   * « tous » se dit par l'absence du paramètre, pas par une valeur.
+   */
+  private listParams(page: number, itemsPerPage: number, filters: IEventFilters): HttpParams {
+    let params = new HttpParams().set('page', page).set('itemsPerPage', itemsPerPage);
+    for (const [key, value] of Object.entries(filters)) {
+      const text = String(value ?? '').trim();
+      if (text !== '') params = params.set(key, text);
+    }
+    return params;
   }
 
   getEvent(eventID: string | number): Observable<IEvent> {
@@ -80,8 +91,19 @@ export class EventsService extends AppService {
     );
   }
 
-  updateEvent(eventID: string | number, event: IEvent): Observable<IEvent | null> {
-    return this.put<IApiResponse<IEvent> | IEvent | null>(`/events/${eventID}`, event).pipe(
+  updateEvent(eventID: string | number, changes: IUpdateEventPayload): Observable<IEvent | null> {
+    return this.patch<IApiResponse<IEvent> | IEvent | null>(`/events/${eventID}`, changes).pipe(
+      map((response) => this.unwrap(response))
+    );
+  }
+
+  /**
+   * Passe un brouillon en « publié » (`POST /events/{id}/publish`).
+   * Réservé au responsable et aux administrateurs de l'organisation : l'API
+   * reste seule juge et répond 403 sinon.
+   */
+  publishEvent(eventID: string | number): Observable<IEvent | null> {
+    return this.post<IApiResponse<IEvent> | IEvent | null>(`/events/${eventID}/publish`, {}).pipe(
       map((response) => this.unwrap(response))
     );
   }

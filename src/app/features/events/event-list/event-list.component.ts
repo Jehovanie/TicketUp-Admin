@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, OnInit } from '@angular/core';
 
 import { ListEventComponent } from './components/list-event/list-event.component';
@@ -9,13 +10,15 @@ import {
   EventsService,
 } from '@/app/_core/services/events/events.service';
 
-import { IEvent } from '@/app/_core/model';
+import { ICategory, IEvent, IEventFilters, IOrganizer } from '@/app/_core/model';
+import { CategoryService } from '@/app/_core/services/category/category.service';
+import { OrganizerService } from '@/app/_core/services/organizer/organizer.service';
 import { LoadingComponent } from '@/app/_shared/components/loading/loading.component';
 import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-event-list',
-  imports: [
+  imports: [MatTooltipModule, 
     ListEventComponent,
     FilterEventComponent,
     RouterLink,
@@ -44,16 +47,44 @@ export class EventListComponent implements OnInit {
   };
 
   /** Bascule grille / liste : portée par la page pour rester dans la barre d'outils. */
+  /** Filtres actifs, transmis tels quels au serveur (pagination côté serveur). */
+  public filters: IEventFilters = {};
+  public organizers: IOrganizer[] = [];
+  public categories: ICategory[] = [];
+
   public viewMode: 'grid' | 'list' = 'grid';
 
   setViewMode(mode: 'grid' | 'list'): void {
     this.viewMode = mode;
   }
 
-  constructor(private eventService: EventsService) {}
+  constructor(
+    private eventService: EventsService,
+    private organizerService: OrganizerService,
+    private categoryService: CategoryService
+  ) {}
 
   ngOnInit(): void {
     this.loadEvents();
+    this.loadFilterOptions();
+  }
+
+  /** Options des listes déroulantes : leur échec ne doit pas bloquer la liste. */
+  private loadFilterOptions(): void {
+    this.organizerService.getMyOrganizers().subscribe({
+      next: (organizers) => (this.organizers = organizers),
+      error: (e) => console.error('Erreur lors du chargement des organisations:', e),
+    });
+    this.categoryService.getAllCategries().subscribe({
+      next: (categories) => (this.categories = categories),
+      error: (e) => console.error('Erreur lors du chargement des catégories:', e),
+    });
+  }
+
+  /** Un filtre change : on repart de la première page, le nombre de résultats n'est plus le même. */
+  onFiltersChange(filters: IEventFilters): void {
+    this.filters = filters;
+    this.loadEvents(1);
   }
 
   loadEvents(
@@ -62,7 +93,7 @@ export class EventListComponent implements OnInit {
   ): void {
     this.data = { ...this.data, isLoading: true, error: null };
 
-    this.eventService.getMyEvents(page, pageSize).subscribe({
+    this.eventService.getMyEvents(page, pageSize, this.filters).subscribe({
       next: (result) => {
         this.pagination = {
           page: result.currentPage ?? page,
@@ -81,7 +112,8 @@ export class EventListComponent implements OnInit {
         this.data = {
           isLoading: false,
           events: [],
-          error: 'Impossible de charger les événements.',
+          // Les 400/403 des filtres portent un message métier exploitable.
+          error: e?.error?.message ?? 'Impossible de charger les événements.',
         };
       },
     });

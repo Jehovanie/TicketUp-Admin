@@ -1,3 +1,4 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, formatNumber } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -16,7 +17,7 @@ import { DEFAULT_EVENTS_PER_PAGE } from '@/app/_core/services/events/events.serv
  */
 @Component({
   selector: 'app-list-event',
-  imports: [
+  imports: [MatTooltipModule, 
     CommonModule,
     RouterLink,
     TitleCaseDateFrPipe,
@@ -173,6 +174,17 @@ export class ListEventComponent {
     if (this.isEventOngoing(event)) return 'ongoing';
     if (this.isEventPast(event)) return 'past';
     return 'upcoming';
+  }
+
+  /**
+   * Publication : `status` est un booléen côté API (`true` = publié). Autre
+   * chose (champ absent, chaîne héritée) → `null`, et aucune pastille plutôt
+   * qu'une information fausse.
+   */
+  getPublication(event: IEvent): 'published' | 'draft' | null {
+    if (event.status === true) return 'published';
+    if (event.status === false) return 'draft';
+    return null;
   }
 
   /** Nom de la catégorie, quand l'API la renvoie sous forme d'objet. */

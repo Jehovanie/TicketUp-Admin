@@ -6,7 +6,7 @@ import {
   IRegisterResponse,
 } from "./auth.interface";
 import { ICategory } from "./category.interface";
-import { IEvent } from "./event.interface";
+import { EventPeriod, EventPublication, EventSort, IEvent, IEventFilters, IUpdateEventPayload } from "./event.interface";
 import { IEventStatusDetail, IEventStatusTicket } from "./event-status.interface";
 import {
   ICreateOrganizerPayload,
@@ -37,7 +37,12 @@ export type {
   IAuthTokens,
   ICategory,
   ICreateOrganizerPayload,
+  EventPeriod,
+  EventPublication,
+  EventSort,
   IEvent,
+  IEventFilters,
+  IUpdateEventPayload,
   IEventStatusDetail,
   IEventStatusTicket,
   IHydraCollection,

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, debounceTime, distinctUntilChanged, of, switchMap, takeUntil, catchError } from 'rxjs';
 
@@ -16,7 +17,7 @@ const MIN_SEARCH_LENGTH = 3;
 
 @Component({
   selector: 'app-organizer-members',
-  imports: [CommonModule, FormsModule, MatIconModule, LoadingComponent],
+  imports: [MatTooltipModule, CommonModule, FormsModule, MatIconModule, LoadingComponent],
   templateUrl: './organizer-members.component.html',
 })
 export class OrganizerMembersComponent implements OnInit, OnChanges, OnDestroy {

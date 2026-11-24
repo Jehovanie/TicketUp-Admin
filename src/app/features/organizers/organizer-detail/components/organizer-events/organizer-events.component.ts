@@ -9,6 +9,7 @@ import { ListEventComponent } from '@/app/features/events/event-list/components/
 import { LoadingComponent } from '@/app/_shared/components/loading/loading.component';
 
 type Period = 'upcoming' | 'ongoing' | 'past';
+type Publication = 'published' | 'draft';
 
 /** Plafond serveur de `itemsPerPage` sur `/organizers/{id}/events`. */
 const MAX_PAGE_SIZE = 20;
@@ -29,7 +30,14 @@ export class OrganizerEventsComponent implements OnChanges {
     { key: 'past', label: 'Passés' },
   ];
 
+  readonly publications: { key: Publication | undefined; label: string }[] = [
+    { key: undefined, label: 'Tous' },
+    { key: 'published', label: 'Publiés' },
+    { key: 'draft', label: 'Brouillons' },
+  ];
+
   period: Period | undefined;
+  status: Publication | undefined;
   events: IEvent[] = [];
   itemsTotal = 0;
   page = 1;
@@ -47,7 +55,7 @@ export class OrganizerEventsComponent implements OnChanges {
     this.isLoading = true;
     this.error = null;
     this.organizerService
-      .getOrganizerEvents(this.organizerId, this.page, this.pageSize, { period: this.period })
+      .getOrganizerEvents(this.organizerId, this.page, this.pageSize, { period: this.period, status: this.status })
       .subscribe({
         next: (result) => {
           this.events = result.items;
@@ -66,6 +74,16 @@ export class OrganizerEventsComponent implements OnChanges {
     this.period = period;
     this.page = 1;
     this.load();
+  }
+
+  setStatus(status: Publication | undefined): void {
+    this.status = status;
+    this.page = 1;
+    this.load();
+  }
+
+  get hasFilter(): boolean {
+    return !!this.period || !!this.status;
   }
 
   onPageChange(page: number): void {
