@@ -25,6 +25,15 @@ describe('OrganizerNewComponent', () => {
     fixture.detectChanges();
   };
 
+  /** Active MVola avec un compte valide, le minimum exigé par l'API. */
+  const fillPayment = () => {
+    component.updatePayment('mvola', {
+      enabled: true,
+      phoneNumber: '034 12 345 67',
+      accountName: 'RAKOTO Jean',
+    });
+  };
+
   beforeEach(async () => {
     notificationSpy = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
@@ -60,6 +69,7 @@ describe('OrganizerNewComponent', () => {
   it('envoie la création au clic sur le bouton', () => {
     component.name.set('Antsika Prod');
     component.email.set('contact@antsika.mg');
+    fillPayment();
     fixture.detectChanges();
 
     clickSubmit();
@@ -71,6 +81,9 @@ describe('OrganizerNewComponent', () => {
       email: 'contact@antsika.mg',
       phone: null,
       website: null,
+      paymentMethods: [
+        { provider: 'mvola', phoneNumber: '034 12 345 67', accountName: 'RAKOTO Jean' },
+      ],
     });
 
     request.flush({
@@ -86,6 +99,7 @@ describe('OrganizerNewComponent', () => {
 
     component.name.set('Antsika Prod');
     component.email.set('contact@antsika.mg');
+    fillPayment();
     clickSubmit();
 
     httpMock.expectOne(`${environment.apiUrl}/organizers`).flush({
@@ -104,10 +118,27 @@ describe('OrganizerNewComponent', () => {
     expect(component.submitted()).toBeTrue();
   });
 
+  it("exige au moins un compte mobile money", () => {
+    component.name.set('Antsika Prod');
+    component.email.set('contact@antsika.mg');
+    clickSubmit();
+
+    httpMock.expectNone(`${environment.apiUrl}/organizers`);
+    expect(component.hasPaymentMethod()).toBeFalse();
+  });
+
+  it("refuse un numéro qui n'appartient pas à l'opérateur", () => {
+    component.updatePayment('mvola', { enabled: true, phoneNumber: '033 12 345 67', accountName: 'X' });
+    expect(component.isValidPhone('mvola')).toBeFalse();
+    component.updatePayment('mvola', { phoneNumber: '+261 34 12 345 67' });
+    expect(component.isValidPhone('mvola')).toBeTrue();
+  });
+
   // Le message de l'API est plus utile que le nôtre : on le remonte tel quel.
   it("affiche le message d'erreur renvoyé par l'API", () => {
     component.name.set('Antsika Prod');
     component.email.set('contact@antsika.mg');
+    fillPayment();
     clickSubmit();
 
     httpMock.expectOne(`${environment.apiUrl}/organizers`).flush(

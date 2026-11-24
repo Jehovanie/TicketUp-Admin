@@ -1,3 +1,15 @@
+/** Opérateurs mobile money pris en charge (mêmes valeurs que `MobileMoneyProvider` côté API). */
+export type MobileMoneyProvider = 'mvola' | 'orange_money' | 'airtel_money';
+
+/** Compte mobile money d'une organisation. */
+export interface IPaymentMethod {
+    provider: MobileMoneyProvider;
+    /** Numéro saisi (l'API le normalise en `+261XXXXXXXXX`). */
+    phoneNumber: string;
+    /** Nom du titulaire : celui que l'acheteur voit chez l'opérateur. */
+    accountName: string;
+}
+
 export interface IOrganizer {
     /** Entier côté API (`Organizer::$id`), malgré l'ancien typage en chaîne. */
     id?: number;
@@ -16,6 +28,8 @@ export interface IMyOrganizer extends IOrganizer {
     roleLabel?: string;
     isOwner?: boolean;
     joinedAt?: string;
+    /** Servi uniquement aux membres de l'organisation. */
+    paymentMethods?: (IPaymentMethod & { providerLabel?: string })[];
 }
 
 /**
@@ -31,10 +45,11 @@ export interface IMyOrganizations {
     items: IMyOrganizer[];
 }
 
-/** Corps de `POST /organizers`. `name` et `email` sont exigés par l'API. */
+/** Corps de `POST /organizers`. `name`, `email` et au moins un compte mobile money sont exigés par l'API. */
 export interface ICreateOrganizerPayload {
     name: string;
     email: string;
     phone?: string | null;
     website?: string | null;
+    paymentMethods: IPaymentMethod[];
 }

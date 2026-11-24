@@ -50,7 +50,11 @@ describe('OrganizerService', () => {
     it('poste sur /organizers et déballe `data`', () => {
       let created: IMyOrganizer | undefined;
       service
-        .createOrganizer({ name: 'Antsika Prod', email: 'contact@antsika.mg' })
+        .createOrganizer({
+          name: 'Antsika Prod',
+          email: 'contact@antsika.mg',
+          paymentMethods: [{ provider: 'mvola', phoneNumber: '0341234567', accountName: 'RAKOTO Jean' }],
+        })
         .subscribe((r) => (created = r));
 
       const request = httpMock.expectOne(`${environment.apiUrl}/organizers`);

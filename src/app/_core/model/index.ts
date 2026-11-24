@@ -13,6 +13,8 @@ import {
   IMyOrganizations,
   IMyOrganizer,
   IOrganizer,
+  IPaymentMethod,
+  MobileMoneyProvider,
 } from "./organizer.interface";
 import {ILocation } from "./location.interface";
 import { IPaymentTicket } from "./payment_ticket.interface";
@@ -36,6 +38,8 @@ export type {
   IMyOrganizer,
   IOrganizer,
   IPaginated,
+  IPaymentMethod,
+  MobileMoneyProvider,
   IPaymentTicket,
   IRegisterPayload,
   IRegisterResponse,
