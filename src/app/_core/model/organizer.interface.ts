@@ -53,3 +53,95 @@ export interface ICreateOrganizerPayload {
     website?: string | null;
     paymentMethods: IPaymentMethod[];
 }
+
+/** Rôle d'un utilisateur dans une organisation (`OrganizerRole.php`). */
+export type OrganizerRole = 'owner' | 'admin' | 'member';
+
+/** Fiche complète (`GET /organizers/{id}`) : `role` est celui de l'appelant, absent pour un super administrateur. */
+export interface IOrganizerDetail extends Omit<IMyOrganizer, 'createdAt' | 'updatedAt' | 'paymentMethods'> {
+    paymentMethods: (IPaymentMethod & { providerLabel?: string })[];
+    /** Dates ISO (le JSON ne porte pas de `Date`). */
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+/** Corps de `PATCH /organizers/{id}` : n'importe quel sous-ensemble. */
+export interface IUpdateOrganizerPayload {
+    name?: string;
+    email?: string;
+    phone?: string | null;
+    website?: string | null;
+    paymentMethods?: IPaymentMethod[];
+}
+
+/** Membre d'une organisation (`GET /organizers/{id}/members`). */
+export interface IOrganizerMember {
+    userId: number;
+    email: string;
+    firstname?: string | null;
+    lastname?: string | null;
+    phone?: string | null;
+    role: OrganizerRole;
+    roleLabel: string;
+    isOwner: boolean;
+    joinedAt?: string;
+}
+
+/** Utilisateur proposé à l'invitation (`GET /organizers/{id}/member-candidates`). */
+export interface IMemberCandidate {
+    id: number;
+    email: string;
+    firstname?: string | null;
+    lastname?: string | null;
+}
+
+export interface IOrganizerStats {
+    organizer: { id: number; name: string };
+    currency: string;
+    generatedAt: string;
+    events: {
+        total: number;
+        published: number;
+        draft: number;
+        upcoming: number;
+        ongoing: number;
+        past: number;
+    };
+    sales: {
+        ordersPaid: number;
+        ticketsSold: number;
+        /** En ariary. */
+        revenue: number;
+        ordersByStatus: Record<string, number>;
+    };
+    series: {
+        granularity: 'day' | 'month';
+        from: string;
+        to: string;
+        points: IStatsPoint[];
+    };
+    topEvents: ITopEvent[];
+}
+
+export interface IStatsPoint {
+    /** `AAAA-MM-JJ` ou `AAAA-MM` selon la granularité. */
+    date: string;
+    orders: number;
+    ticketsSold: number;
+    revenue: number;
+}
+
+export interface ITopEvent {
+    id: number;
+    title: string;
+    ticketsSold: number;
+    orders: number;
+    revenue: number;
+}
+
+export interface IStatsQuery {
+    granularity?: 'day' | 'month';
+    from?: string;
+    to?: string;
+    top?: number;
+}

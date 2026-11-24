@@ -5,38 +5,24 @@ import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
 import { IPaymentMethod, MobileMoneyProvider } from '@/app/_core/model';
+import {
+  emptyPaymentEntries,
+  IPaymentEntry,
+  isValidAccountName,
+  isValidMobileMoneyPhone,
+  PaymentEntries,
+  PROVIDER_OPTIONS,
+} from '@/app/_shared/utils/payment-methods';
+import { PaymentMethodsFieldsComponent } from '@/app/_shared/components/payment-methods-fields/payment-methods-fields.component';
 import { OrganizerService } from '@/app/_core/services/organizer/organizer.service';
 import { BtnLoadingComponent } from '@/app/_shared/components/btn-loading/btn-loading.component';
 import { NotificationService } from '@/app/_shared/services/notification.service';
-
-/** Un opérateur et les préfixes (après le `0` national) qu'il attribue — voir `MobileMoneyProvider.php`. */
-interface IProviderOption {
-  provider: MobileMoneyProvider;
-  label: string;
-  /** Fichier servi depuis `public/logos/`. */
-  logo: string;
-  prefixes: string[];
-  placeholder: string;
-}
-
-/** Saisie d'un compte : `enabled` décide s'il part dans la requête. */
-interface IPaymentEntry {
-  enabled: boolean;
-  phoneNumber: string;
-  accountName: string;
-}
-
-export const PROVIDER_OPTIONS: IProviderOption[] = [
-  { provider: 'mvola', label: 'MVola', logo: '/logos/mvola.jpg', prefixes: ['34', '38'], placeholder: '034 12 345 67' },
-  { provider: 'orange_money', label: 'Orange Money', logo: '/logos/orangemoney.png', prefixes: ['32', '37'], placeholder: '032 12 345 67' },
-  { provider: 'airtel_money', label: 'Airtel Money', logo: '/logos/airtelmoney.png', prefixes: ['33'], placeholder: '033 12 345 67' },
-];
 
 @Component({
   selector: 'app-organizer-new',
   // `FormsModule` porte `(ngSubmit)` : sans lui, l'écouteur ne se rattache à
   // aucun événement réel et le bouton d'envoi ne déclenche rien.
-  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, BtnLoadingComponent],
+  imports: [CommonModule, FormsModule, RouterLink, MatIconModule, BtnLoadingComponent, PaymentMethodsFieldsComponent],
   templateUrl: './organizer-new.component.html',
   host: {
     class: 'block h-full'
@@ -51,11 +37,7 @@ export class OrganizerNewComponent {
 
   readonly providers = PROVIDER_OPTIONS;
 
-  readonly payments = signal<Record<MobileMoneyProvider, IPaymentEntry>>({
-    mvola: { enabled: false, phoneNumber: '', accountName: '' },
-    orange_money: { enabled: false, phoneNumber: '', accountName: '' },
-    airtel_money: { enabled: false, phoneNumber: '', accountName: '' },
-  });
+  readonly payments = signal<PaymentEntries>(emptyPaymentEntries());
 
   /** Passe à `true` à la première tentative d'envoi : on n'accuse pas l'utilisateur avant. */
   readonly submitted = signal(false);
@@ -119,26 +101,12 @@ export class OrganizerNewComponent {
     this.payments.update((all) => ({ ...all, [provider]: { ...all[provider], ...patch } }));
   }
 
-  /**
-   * Même contrôle que l'API (`normalizePhone`) : numéro malgache à 10 chiffres
-   * dont l'indicatif appartient à l'opérateur — évite d'enregistrer un numéro
-   * Airtel sous « MVola ».
-   */
   isValidPhone(provider: MobileMoneyProvider): boolean {
-    const digits = this.payments()[provider].phoneNumber.replace(/[\s.\-()]/g, '');
-    let national = digits;
-    if (digits.startsWith('+261')) national = '0' + digits.slice(4);
-    else if (digits.startsWith('00261')) national = '0' + digits.slice(5);
-    else if (digits.startsWith('261')) national = '0' + digits.slice(3);
-
-    if (!/^0\d{9}$/.test(national)) return false;
-    const option = this.providers.find((o) => o.provider === provider);
-    return !!option && option.prefixes.includes(national.slice(1, 3));
+    return isValidMobileMoneyPhone(provider, this.payments()[provider].phoneNumber);
   }
 
   isValidAccountName(provider: MobileMoneyProvider): boolean {
-    const value = this.payments()[provider].accountName.trim();
-    return value.length > 0 && value.length <= 100;
+    return isValidAccountName(this.payments()[provider].accountName);
   }
 
   onSubmit(): void {

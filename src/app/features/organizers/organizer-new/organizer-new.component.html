@@ -164,74 +164,12 @@
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div
-            *ngFor="let option of providers"
-            class="rounded-xl border transition-colors"
-            [ngClass]="payments()[option.provider].enabled ? 'border-primary-500 bg-primary-50/40' : 'border-gray-200'"
-          >
-            <label class="flex items-center gap-3 p-4 cursor-pointer">
-              <input
-                type="checkbox"
-                class="h-4 w-4 rounded border-gray-300 accent-primary focus-visible:ring-2 focus-visible:ring-primary-500"
-                [checked]="payments()[option.provider].enabled"
-                (change)="toggleProvider(option.provider)"
-              />
-              <img
-                [src]="option.logo"
-                alt=""
-                class="h-9 w-9 rounded-lg object-contain bg-white border border-gray-100 flex-shrink-0"
-              />
-              <span class="font-medium text-sm text-gray-900">{{ option.label }}</span>
-            </label>
-
-            <div
-              *ngIf="payments()[option.provider].enabled"
-              class="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 pb-4"
-            >
-              <div>
-                <label [for]="'phone-' + option.provider" class="block text-sm font-medium text-gray-700 mb-1.5">
-                  Numéro <span class="text-danger-500">*</span>
-                </label>
-                <input
-                  [id]="'phone-' + option.provider"
-                  type="tel"
-                  maxlength="20"
-                  [placeholder]="option.placeholder"
-                  [value]="payments()[option.provider].phoneNumber"
-                  (input)="updatePayment(option.provider, { phoneNumber: $any($event.target).value })"
-                  [class.border-danger-500]="submitted() && !isValidPhone(option.provider)"
-                  class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                />
-                <p *ngIf="submitted() && !isValidPhone(option.provider)" class="mt-1.5 flex items-center gap-1 text-xs text-danger-600">
-                  <mat-icon class="!w-3.5 !h-3.5 !text-sm">error_outline</mat-icon>
-                  Numéro {{ option.label }} invalide (indicatifs : 0{{ option.prefixes.join(', 0') }}).
-                </p>
-              </div>
-
-              <div>
-                <label [for]="'account-' + option.provider" class="block text-sm font-medium text-gray-700 mb-1.5">
-                  Nom du titulaire <span class="text-danger-500">*</span>
-                </label>
-                <input
-                  [id]="'account-' + option.provider"
-                  type="text"
-                  maxlength="100"
-                  placeholder="RAKOTO Jean"
-                  [value]="payments()[option.provider].accountName"
-                  (input)="updatePayment(option.provider, { accountName: $any($event.target).value })"
-                  [class.border-danger-500]="submitted() && !isValidAccountName(option.provider)"
-                  class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                />
-                <p *ngIf="submitted() && !isValidAccountName(option.provider)" class="mt-1.5 flex items-center gap-1 text-xs text-danger-600">
-                  <mat-icon class="!w-3.5 !h-3.5 !text-sm">error_outline</mat-icon>
-                  Le nom du titulaire est obligatoire.
-                </p>
-                <p class="mt-1.5 text-xs text-gray-500">Tel qu'il s'affiche chez l'opérateur.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <app-payment-methods-fields
+          [payments]="payments()"
+          [submitted]="submitted()"
+          (toggled)="toggleProvider($event)"
+          (changed)="updatePayment($event.provider, $event.patch)"
+        ></app-payment-methods-fields>
 
         <p *ngIf="submitted() && !hasPaymentMethod()" class="mt-3 flex items-center gap-1 text-xs text-danger-600" role="alert">
           <mat-icon class="!w-3.5 !h-3.5 !text-sm">error_outline</mat-icon>

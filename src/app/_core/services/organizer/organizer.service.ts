@@ -1,10 +1,19 @@
 import { Injectable } from '@angular/core';
 import { AppService } from '../AppService';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environements/environement';
 import {
   IApiResponse,
   ICreateOrganizerPayload,
+  IEvent,
+  IMemberCandidate,
+  IOrganizerDetail,
+  IOrganizerMember,
+  IOrganizerStats,
+  IPaginated,
+  IStatsQuery,
+  IUpdateOrganizerPayload,
+  OrganizerRole,
   IMyOrganizations,
   IMyOrganizer,
   IOrganizer,
@@ -69,6 +78,84 @@ export class OrganizerService extends AppService {
   createOrganizer(payload: ICreateOrganizerPayload): Observable<IMyOrganizer> {
     return this.post<IApiResponse<IMyOrganizer>>('/organizers', payload).pipe(
       map((response) => response.data)
+    );
+  }
+
+  /** Fiche complète, réservée aux membres (comptes mobile money et rôle de l'appelant compris). */
+  getOrganizer(id: number): Observable<IOrganizerDetail> {
+    return this.get<IApiResponse<IOrganizerDetail>>(`/organizers/${id}`).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  /** Modification partielle ; `paymentMethods`, s'il est envoyé, remplace la liste entière. */
+  updateOrganizer(id: number, payload: IUpdateOrganizerPayload): Observable<IOrganizerDetail> {
+    return this.patch<IApiResponse<IOrganizerDetail>>(`/organizers/${id}`, payload).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  /** Événements de l'organisation, brouillons compris. */
+  getOrganizerEvents(
+    id: number,
+    page = 1,
+    itemsPerPage = 12,
+    filters: { status?: 'published' | 'draft'; period?: 'upcoming' | 'ongoing' | 'past' } = {}
+  ): Observable<IPaginated<IEvent>> {
+    let params = new HttpParams().set('page', page).set('itemsPerPage', itemsPerPage);
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.period) params = params.set('period', filters.period);
+    return this.get<IApiResponse<IPaginated<IEvent>>>(`/organizers/${id}/events`, params).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  getOrganizerStats(id: number, query: IStatsQuery = {}): Observable<IOrganizerStats> {
+    let params = new HttpParams();
+    if (query.granularity) params = params.set('granularity', query.granularity);
+    if (query.from) params = params.set('from', query.from);
+    if (query.to) params = params.set('to', query.to);
+    if (query.top) params = params.set('top', query.top);
+    return this.get<IApiResponse<IOrganizerStats>>(`/organizers/${id}/stats`, params).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  getMembers(id: number): Observable<IOrganizerMember[]> {
+    return this.get<IApiResponse<{ items: IOrganizerMember[] }>>(`/organizers/${id}/members`).pipe(
+      map((response) => response.data.items)
+    );
+  }
+
+  /** Recherche d'utilisateurs à inviter : l'API exige au moins 3 caractères. */
+  searchMemberCandidates(id: number, term: string): Observable<IMemberCandidate[]> {
+    const params = new HttpParams().set('q', term);
+    return this.get<IApiResponse<{ items: IMemberCandidate[] }>>(
+      `/organizers/${id}/member-candidates`,
+      params
+    ).pipe(map((response) => response.data.items));
+  }
+
+  addMember(id: number, userId: number, role: OrganizerRole): Observable<IOrganizerMember> {
+    return this.post<IApiResponse<IOrganizerMember>>(`/organizers/${id}/members`, { userId, role }).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  updateMemberRole(id: number, userId: number, role: OrganizerRole): Observable<IOrganizerMember> {
+    return this.patch<IApiResponse<IOrganizerMember>>(`/organizers/${id}/members/${userId}`, { role }).pipe(
+      map((response) => response.data)
+    );
+  }
+
+  removeMember(id: number, userId: number): Observable<void> {
+    return this.remove<IApiResponse<null>>(`/organizers/${id}/members/${userId}`).pipe(map(() => void 0));
+  }
+
+  /** Transfère la responsabilité ; l'ancien responsable devient administrateur. */
+  transferOwnership(id: number, userId: number): Observable<IOrganizerMember[]> {
+    return this.put<IApiResponse<{ members: IOrganizerMember[] }>>(`/organizers/${id}/owner`, { userId }).pipe(
+      map((response) => response.data.members)
     );
   }
 }

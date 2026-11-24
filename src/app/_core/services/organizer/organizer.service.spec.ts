@@ -126,4 +126,55 @@ describe('OrganizerService', () => {
       expect(organizers?.[0].name).toBe('Tech Madagascar');
     });
   });
+
+  describe("administration d'une organisation", () => {
+    const url = (path: string) => `${environment.apiUrl}/organizers/${path}`;
+
+    it('modifie par PATCH et déballe `data`', () => {
+      let name: string | undefined;
+      service.updateOrganizer(7, { name: 'Nouveau nom' }).subscribe((o) => (name = o.name));
+
+      const request = httpMock.expectOne(url('7'));
+      expect(request.request.method).toBe('PATCH');
+      expect(request.request.body).toEqual({ name: 'Nouveau nom' });
+      request.flush({ message: 'ok', status: 200, data: { id: 7, name: 'Nouveau nom', paymentMethods: [] } });
+
+      expect(name).toBe('Nouveau nom');
+    });
+
+    it('envoie les filtres de statistiques en query', () => {
+      service.getOrganizerStats(7, { granularity: 'month', top: 3 }).subscribe();
+
+      const request = httpMock.expectOne((r) => r.url === url('7/stats'));
+      expect(request.request.params.get('granularity')).toBe('month');
+      expect(request.request.params.get('top')).toBe('3');
+      request.flush({ message: 'ok', status: 200, data: {} });
+    });
+
+    it('liste les membres depuis `data.items`', () => {
+      let count = 0;
+      service.getMembers(7).subscribe((m) => (count = m.length));
+
+      httpMock.expectOne(url('7/members')).flush({
+        message: 'ok',
+        status: 200,
+        data: { itemsTotal: 1, items: [{ userId: 1, email: 'a@b.mg', role: 'owner', roleLabel: 'Responsable', isOwner: true }] },
+      });
+
+      expect(count).toBe(1);
+    });
+
+    it('change un rôle par PATCH et retire par DELETE', () => {
+      service.updateMemberRole(7, 3, 'admin').subscribe();
+      const patch = httpMock.expectOne(url('7/members/3'));
+      expect(patch.request.method).toBe('PATCH');
+      expect(patch.request.body).toEqual({ role: 'admin' });
+      patch.flush({ message: 'ok', status: 200, data: { userId: 3, role: 'admin' } });
+
+      service.removeMember(7, 3).subscribe();
+      const del = httpMock.expectOne(url('7/members/3'));
+      expect(del.request.method).toBe('DELETE');
+      del.flush({ message: 'ok', status: 200, data: null });
+    });
+  });
 });

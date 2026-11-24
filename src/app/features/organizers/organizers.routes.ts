@@ -20,6 +20,13 @@ export const ORGANIZERS_ROUTES: Routes = [
             (m) => m.OrganizerNewComponent
           ),
       },
+      {
+        path: ':organizerId',
+        loadComponent: () =>
+          import('./organizer-detail/organizer-detail.component').then(
+            (m) => m.OrganizerDetailComponent
+          ),
+      },
     ],
   },
 ];

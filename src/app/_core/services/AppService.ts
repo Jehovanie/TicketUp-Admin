@@ -40,6 +40,12 @@ export class AppService {
     });
   }
 
+  protected patch<R>(url: string, body: unknown): Observable<R> {
+    return this.httpClient.patch<R>(`${this.baseUrl}${url}`, body, {
+      headers: this.headers,
+    });
+  }
+
   protected remove<R>(url: string): Observable<R> {
     return this.httpClient.delete<R>(`${this.baseUrl}${url}`, {
       headers: this.headers,
