@@ -14,6 +14,10 @@ import { ICategory } from '../../../_core/model/category.interface';
 import { ILocation } from '../../../_core/model/location.interface';
 import { IOrganizer } from '../../../_core/model/organizer.interface';
 import { ITicketType } from '../../../_core/model/ticket-type.interface';
+import { AuthService } from '../../../_core/services/auth/auth.service';
+import { OrganizerService } from '../../../_core/services/organizer/organizer.service';
+import { IMyOrganizations } from '../../../_core/model';
+import { ConfirmService } from '../../../_shared/services/confirm.service';
 import { EventsService } from '../../../_core/services/events/events.service';
 import { LoadingComponent } from '../../../_shared/components/loading/loading.component';
 import { EventDetailHeaderComponent } from './components/event-detail-header/event-detail-header.component';
@@ -46,6 +50,9 @@ export class EventDetailComponent implements OnInit, OnDestroy {
   public event: IEvent | null = null;
   public isLoading = true;
   public isDeleting = false;
+  public isPublishing = false;
+  /** Mes organisations et mon rôle dans chacune : décide qui peut publier. */
+  private myOrganizations: IMyOrganizations | null = null;
   public error: string | null = null;
   
   // État des statistiques
@@ -67,8 +74,65 @@ export class EventDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private eventsService: EventsService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private auth: AuthService,
+    private organizerService: OrganizerService,
+    private confirm: ConfirmService
   ) {}
+
+  /**
+   * Seuls le responsable et les administrateurs de l'organisation de
+   * l'événement peuvent publier (`ORGANIZER_EDIT`) ; le super administrateur,
+   * sans appartenance, a tous les droits. Le masquage n'est qu'un confort :
+   * l'API refuse de toute façon un appel non autorisé.
+   */
+  get canPublish(): boolean {
+    if (this.auth.isSuperAdmin()) return true;
+    const organizerId =
+      this.event?.organizer && typeof this.event.organizer === 'object'
+        ? this.event.organizer.id
+        : undefined;
+    const role = this.myOrganizations?.items.find((o) => o.id === organizerId)?.role;
+    return role === 'owner' || role === 'admin';
+  }
+
+  publishEvent(): void {
+    if (!this.event || this.isPublishing) return;
+
+    this.confirm
+      .ask({
+        title: 'Publier cet événement ?',
+        message: 'Il sera visible par le public dès maintenant.',
+        confirmLabel: 'Publier',
+        icon: 'publish',
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((ok) => {
+        if (ok) this.doPublish();
+      });
+  }
+
+  private doPublish(): void {
+    this.isPublishing = true;
+    this.eventsService.publishEvent(this.eventID)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // On n'attend pas l'écho de l'API : le seul changement est le statut.
+          this.event = { ...this.event!, status: true };
+          this.isPublishing = false;
+          this.notification.success('Événement publié', 'Publication');
+        },
+        error: (err) => {
+          console.error('Erreur lors de la publication:', err);
+          this.isPublishing = false;
+          this.notification.error(
+            err?.error?.message ?? "Impossible de publier l'événement.",
+            'Échec de la publication'
+          );
+        },
+      });
+  }
 
   ngOnInit(): void {
     this.route.params
@@ -76,6 +140,7 @@ export class EventDetailComponent implements OnInit, OnDestroy {
       .subscribe(params => {
         this.eventID = params['eventID'];
         if (this.eventID) {
+          this.loadMyOrganizations();
           this.loadEventDetails();
           this.loadEventStats();
         }
@@ -85,6 +150,16 @@ export class EventDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /** Échec sans gravité : sans rôle connu, le bouton « Publier » reste simplement masqué. */
+  private loadMyOrganizations(): void {
+    this.organizerService.getMyOrganizations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (organizations) => (this.myOrganizations = organizations),
+        error: (err) => console.error('Erreur lors du chargement des organisations:', err),
+      });
   }
 
   /**
@@ -160,6 +235,8 @@ export class EventDetailComponent implements OnInit, OnDestroy {
    * Navigation vers la page d'édition
    */
   editEvent(): void {
+    // Filet de sécurité : le bouton est déjà inactif pour un événement terminé.
+    if (this.event && new Date(this.event.endAt) < new Date()) return;
     this.router.navigate(['/events', this.eventID, 'edit']);
   }
 
@@ -167,10 +244,21 @@ export class EventDetailComponent implements OnInit, OnDestroy {
    * Supprime l'événement
    */
   deleteEvent(): void {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
-      return;
-    }
+    this.confirm
+      .ask({
+        title: 'Supprimer cet événement ?',
+        message: 'Cette action est définitive : l\'événement et ses types de billets seront supprimés.',
+        confirmLabel: 'Supprimer',
+        tone: 'danger',
+        icon: 'delete_outline',
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((ok) => {
+        if (ok) this.doDelete();
+      });
+  }
 
+  private doDelete(): void {
     this.isDeleting = true;
 
     this.eventsService.deleteEvent(this.eventID)

@@ -25,7 +25,7 @@
           type="button"
           (click)="loadOrganizers()"
           [disabled]="data.isLoading"
-          title="Actualiser la liste"
+          matTooltip="Actualiser la liste" aria-label="Actualiser la liste"
           class="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-gray-200 text-gray-500 bg-white hover:bg-gray-50 hover:text-primary-700 disabled:opacity-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
         >
           <svg class="w-5 h-5" [class.animate-spin]="data.isLoading" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -106,9 +106,10 @@
       </div>
 
       <div *ngIf="data.organizers.length > 0" class="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <article
+        <a
           *ngFor="let organizer of data.organizers"
-          class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col gap-4"
+          [routerLink]="['/organizers', organizer.id]"
+          class="group bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:border-primary-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
         >
           <div class="flex items-start gap-3">
             <span class="flex h-11 w-11 rounded-xl bg-primary-50 text-primary-700 items-center justify-center text-sm font-bold flex-shrink-0">
@@ -155,7 +156,7 @@
               </dd>
             </div>
           </dl>
-        </article>
+        </a>
       </div>
     </ng-container>
   </div>

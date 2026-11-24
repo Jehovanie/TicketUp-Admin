@@ -91,3 +91,47 @@ mat-icon.mat-icon {
   max-width: 28rem;
   margin: 1rem;
 }
+
+/*
+ * Infobulles (matTooltip) : fond indigo de la barre latérale, texte court et
+ * net, au lieu du gris translucide par défaut de Material. Les variables MDC
+ * sont celles que Material lit, ce qui évite de forcer le style avec !important.
+ */
+.mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: var(--color-primary-900);
+  --mdc-plain-tooltip-supporting-text-color: #fff;
+  --mdc-plain-tooltip-container-shape: 8px;
+  --mdc-plain-tooltip-supporting-text-size: 12px;
+  --mdc-plain-tooltip-supporting-text-weight: 500;
+  --mdc-plain-tooltip-supporting-text-line-height: 16px;
+  --mdc-plain-tooltip-supporting-text-tracking: 0.01em;
+}
+
+.mat-mdc-tooltip .mdc-tooltip__surface {
+  padding: 6px 10px;
+  max-width: 240px;
+  text-align: center;
+  box-shadow: 0 6px 16px -4px rgb(18 16 99 / 0.35), 0 2px 6px -2px rgb(18 16 99 / 0.2);
+}
+
+/*
+ * Boîtes de confirmation : le conteneur Material est effacé, `ConfirmDialogComponent`
+ * dessine sa propre carte (même principe que les notifications). Le fond est
+ * teinté d'indigo plutôt que d'un noir neutre.
+ */
+.app-confirm-dialog .mat-mdc-dialog-surface {
+  background-color: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.app-confirm-dialog .mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.app-confirm-backdrop {
+  background-color: rgb(18 16 99 / 0.45) !important;
+  backdrop-filter: blur(2px);
+}

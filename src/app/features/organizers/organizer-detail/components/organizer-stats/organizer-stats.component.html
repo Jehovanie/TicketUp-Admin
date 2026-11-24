@@ -1,0 +1,136 @@
+<div class="max-w-5xl mx-auto space-y-4">
+  <div *ngIf="isLoading && !stats" class="py-16 flex justify-center"><app-loading></app-loading></div>
+
+  <div *ngIf="!isLoading && error" class="bg-white rounded-xl border border-gray-200 py-10 text-center px-6">
+    <p class="text-sm text-gray-700">{{ error }}</p>
+    <button
+      type="button"
+      (click)="load()"
+      class="mt-4 inline-flex items-center justify-center bg-primary text-white px-5 h-10 rounded-lg font-medium text-sm hover:bg-primary-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+    >Réessayer</button>
+  </div>
+
+  <ng-container *ngIf="stats && !error">
+    <!-- Indicateurs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <p class="text-xs text-gray-500">Revenus</p>
+        <p class="mt-1 text-2xl font-bold text-gray-900">{{ stats.sales.revenue | ariary: '0 Ar' }}</p>
+        <p class="mt-1 text-xs text-gray-500">Commandes payées uniquement</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <p class="text-xs text-gray-500">Billets vendus</p>
+        <p class="mt-1 text-2xl font-bold text-gray-900">{{ stats.sales.ticketsSold | number }}</p>
+        <p class="mt-1 text-xs text-gray-500">{{ stats.sales.ordersPaid | number }} commande(s) payée(s)</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <p class="text-xs text-gray-500">Événements</p>
+        <p class="mt-1 text-2xl font-bold text-gray-900">{{ stats.events.total }}</p>
+        <p class="mt-1 text-xs text-gray-500">{{ stats.events.published }} publié(s) · {{ stats.events.draft }} brouillon(s)</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <p class="text-xs text-gray-500">Calendrier</p>
+        <div class="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
+          <span class="px-2 py-0.5 rounded-full bg-primary-50 text-primary-700">{{ stats.events.upcoming }} à venir</span>
+          <span class="px-2 py-0.5 rounded-full bg-success-50 text-success-700">{{ stats.events.ongoing }} en cours</span>
+          <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ stats.events.past }} passé(s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Évolution -->
+    <section class="bg-white rounded-xl border border-gray-200 p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="font-semibold text-gray-900">Évolution des ventes</h2>
+          <p class="text-xs text-gray-500">
+            {{ granularity === 'day' ? '30 derniers jours' : '12 derniers mois' }}
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50" role="group" aria-label="Indicateur">
+            <button
+              *ngFor="let m of metrics"
+              type="button"
+              (click)="setMetric(m.key)"
+              [attr.aria-pressed]="metric === m.key"
+              class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              [ngClass]="metric === m.key ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+            >{{ m.label }}</button>
+          </div>
+
+          <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-50" role="group" aria-label="Période">
+            <button
+              type="button"
+              (click)="setGranularity('day')"
+              [attr.aria-pressed]="granularity === 'day'"
+              class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              [ngClass]="granularity === 'day' ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+            >Jours</button>
+            <button
+              type="button"
+              (click)="setGranularity('month')"
+              [attr.aria-pressed]="granularity === 'month'"
+              class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              [ngClass]="granularity === 'month' ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+            >Mois</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative h-64" [class.opacity-50]="isLoading">
+        <canvas baseChart *ngIf="hasSeriesActivity; else aucuneVente" [data]="chartData" [options]="chartOptions" type="bar"></canvas>
+        <ng-template #aucuneVente>
+          <div class="h-full flex flex-col items-center justify-center text-center text-sm text-gray-500">
+            <mat-icon class="!w-8 !h-8 !text-3xl text-gray-300">bar_chart</mat-icon>
+            <p class="mt-2">Aucune vente sur cette période.</p>
+          </div>
+        </ng-template>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Top événements -->
+      <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Événements les plus vendus</h2>
+
+        <ol *ngIf="stats.topEvents.length > 0; else aucunTop" class="space-y-4">
+          <li *ngFor="let event of stats.topEvents; let i = index">
+            <a
+              [routerLink]="['/events', event.id]"
+              class="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            >
+              <div class="flex items-baseline justify-between gap-3">
+                <span class="text-sm font-medium text-gray-900 truncate hover:text-primary-700">
+                  <span class="text-gray-400 mr-1.5">{{ i + 1 }}.</span>{{ event.title }}
+                </span>
+                <span class="text-xs text-gray-500 flex-shrink-0">{{ event.revenue | ariary: '0 Ar' }}</span>
+              </div>
+              <div class="mt-1.5 flex items-center gap-3">
+                <div class="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div class="h-full rounded-full bg-primary" [style.width.%]="topShare(event.ticketsSold)"></div>
+                </div>
+                <span class="text-xs font-semibold text-gray-700 w-20 text-right">{{ event.ticketsSold }} billet(s)</span>
+              </div>
+            </a>
+          </li>
+        </ol>
+        <ng-template #aucunTop>
+          <p class="text-sm text-gray-500">Aucune vente enregistrée pour l'instant.</p>
+        </ng-template>
+      </section>
+
+      <!-- Commandes par statut -->
+      <section class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="font-semibold text-gray-900 mb-4">Commandes par statut</h2>
+        <dl class="space-y-2.5 text-sm">
+          <div *ngFor="let entry of stats.sales.ordersByStatus | keyvalue" class="flex items-center justify-between">
+            <dt class="text-gray-600 capitalize">{{ entry.key }}</dt>
+            <dd class="font-semibold text-gray-900">{{ entry.value }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+  </ng-container>
+</div>

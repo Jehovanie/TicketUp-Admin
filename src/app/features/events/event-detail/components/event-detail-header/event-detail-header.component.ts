@@ -21,13 +21,26 @@ export class EventDetailHeaderComponent {
   @Input() location: ILocation | null = null;
   @Input() category: ICategory | null = null;
   @Input() isDeleting = false;
+  /** Responsable ou administrateur de l'organisation de l'événement. */
+  @Input() canPublish = false;
+  @Input() isPublishing = false;
 
   @Output() back = new EventEmitter<void>();
   @Output() refresh = new EventEmitter<void>();
   @Output() duplicate = new EventEmitter<void>();
   @Output() edit = new EventEmitter<void>();
   @Output() delete = new EventEmitter<void>();
+  @Output() publish = new EventEmitter<void>();
   @Output() viewStats = new EventEmitter<void>();
+
+  /** `status` est un booléen côté API (`true` = publié) ; autre chose → inconnu. */
+  isDraft(): boolean {
+    return this.event?.status === false;
+  }
+
+  isPublished(): boolean {
+    return this.event?.status === true;
+  }
 
   isEventUpcoming(): boolean {
     if (!this.event) return false;

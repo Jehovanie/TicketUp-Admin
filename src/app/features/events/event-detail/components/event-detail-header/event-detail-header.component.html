@@ -44,6 +44,15 @@
         </span>
 
         <span
+          *ngIf="isDraft() || isPublished()"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ring-1"
+          [ngClass]="isPublished() ? 'bg-secondary-50 text-secondary-700 ring-secondary-100' : 'bg-warning-50 text-warning-700 ring-warning-100'"
+        >
+          <mat-icon class="!w-3.5 !h-3.5 !text-sm">{{ isPublished() ? 'check_circle' : 'edit_note' }}</mat-icon>
+          {{ isPublished() ? 'Publié' : 'Brouillon' }}
+        </span>
+
+        <span
           *ngIf="category"
           class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
         >
@@ -95,13 +104,33 @@
       </button>
 
       <button
+        *ngIf="isDraft() && canPublish"
         type="button"
-        (click)="edit.emit()"
-        class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        (click)="publish.emit()"
+        [disabled]="isPublishing"
+        matTooltip="Rendre l'événement visible au public"
+        class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-secondary-700 text-white text-sm font-medium hover:bg-secondary-700/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2"
       >
-        <mat-icon class="!w-5 !h-5 !text-xl">edit</mat-icon>
-        Modifier
+        <mat-icon class="!w-5 !h-5 !text-xl">{{ isPublishing ? 'hourglass_empty' : 'publish' }}</mat-icon>
+        {{ isPublishing ? 'Publication…' : 'Publier' }}
       </button>
+
+      <!-- Un événement terminé n'est plus modifiable : le bouton reste visible mais inactif, avec la raison -->
+      <span
+        [matTooltip]="isEventPast() ? 'Un événement terminé ne peut plus être modifié' : ''"
+        [matTooltipDisabled]="!isEventPast()"
+        class="inline-flex"
+      >
+        <button
+          type="button"
+          (click)="edit.emit()"
+          [disabled]="isEventPast()"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        >
+          <mat-icon class="!w-5 !h-5 !text-xl">{{ isEventPast() ? 'lock' : 'edit' }}</mat-icon>
+          Modifier
+        </button>
+      </span>
 
       <button
         type="button"

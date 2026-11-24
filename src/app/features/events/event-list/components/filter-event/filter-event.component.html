@@ -1,53 +1,130 @@
-<div class="flex flex-col lg:flex-row lg:items-center gap-3">
-  <!-- Recherche -->
-  <div class="relative flex-1 min-w-0 lg:max-w-sm">
-    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <svg class="h-4.5 w-4.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-      </svg>
+<div class="space-y-3">
+  <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+    <!-- Recherche -->
+    <div class="relative flex-1 min-w-0 lg:max-w-sm">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg class="h-4.5 w-4.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      <label for="filterTitle" class="sr-only">Rechercher un événement</label>
+      <input
+        id="filterTitle"
+        type="text"
+        placeholder="Rechercher un événement..."
+        [value]="current.title ?? ''"
+        (input)="onTitle($any($event.target).value)"
+        class="block w-full h-10 pl-10 pr-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      />
     </div>
-    <input
-      type="text"
-      placeholder="Rechercher un événement..."
-      class="block w-full h-10 pl-10 pr-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-    />
+
+    <!-- Organisation -->
+    <div>
+      <label for="filterOrganizer" class="sr-only">Organisation</label>
+      <select
+        id="filterOrganizer"
+        [value]="current.organizer ?? ''"
+        (change)="patch({ organizer: $any($event.target).value })"
+        class="block w-full lg:w-48 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      >
+        <option value="">Toutes les organisations</option>
+        <option *ngFor="let o of organizers" [value]="o.id" [selected]="'' + o.id === '' + (current.organizer ?? '')">{{ o.name }}</option>
+      </select>
+    </div>
+
+    <!-- Catégorie -->
+    <div>
+      <label for="filterCategory" class="sr-only">Catégorie</label>
+      <select
+        id="filterCategory"
+        [value]="current.category ?? ''"
+        (change)="patch({ category: $any($event.target).value })"
+        class="block w-full lg:w-44 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      >
+        <option value="">Toutes catégories</option>
+        <option *ngFor="let c of categories" [value]="c.id" [selected]="'' + c.id === '' + (current.category ?? '')">{{ c.name }}</option>
+      </select>
+    </div>
+
+    <!-- Tri -->
+    <div>
+      <label for="filterSort" class="sr-only">Trier par</label>
+      <select
+        id="filterSort"
+        [value]="current.sort ?? ''"
+        (change)="patch({ sort: $any($event.target).value })"
+        class="block w-full lg:w-52 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      >
+        <option *ngFor="let s of sorts" [value]="s.key" [selected]="s.key === (current.sort ?? '')">{{ s.label }}</option>
+      </select>
+    </div>
   </div>
 
-  <!-- Date -->
-  <div class="relative">
-    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-      <svg class="h-4.5 w-4.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-      </svg>
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+    <!-- Publication -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-medium text-gray-500">Publication</span>
+      <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5" role="group" aria-label="Publication">
+        <button
+          *ngFor="let p of publications"
+          type="button"
+          (click)="patch({ status: p.key || undefined })"
+          [attr.aria-pressed]="(current.status ?? '') === p.key"
+          class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          [ngClass]="(current.status ?? '') === p.key ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+        >{{ p.label }}</button>
+      </div>
     </div>
-    <input
-      type="date"
-      class="block w-full h-10 pl-10 pr-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-    />
+
+    <!-- Période -->
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-medium text-gray-500">Période</span>
+      <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5" role="group" aria-label="Période">
+        <button
+          *ngFor="let p of periods"
+          type="button"
+          (click)="patch({ period: p.key || undefined })"
+          [attr.aria-pressed]="(current.period ?? '') === p.key"
+          class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          [ngClass]="(current.period ?? '') === p.key ? 'bg-white text-primary-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+        >{{ p.label }}</button>
+      </div>
+    </div>
+
+    <!-- Dates de début -->
+    <div class="flex items-center gap-2">
+      <label for="filterStart" class="text-xs font-medium text-gray-500">Début du</label>
+      <input
+        id="filterStart"
+        type="date"
+        [value]="current.startDate ?? ''"
+        [max]="current.endDate ?? ''"
+        (change)="patch({ startDate: $any($event.target).value })"
+        class="h-9 px-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      />
+      <label for="filterEnd" class="text-xs font-medium text-gray-500">au</label>
+      <input
+        id="filterEnd"
+        type="date"
+        [value]="current.endDate ?? ''"
+        [min]="current.startDate ?? ''"
+        (change)="patch({ endDate: $any($event.target).value })"
+        class="h-9 px-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+      />
+    </div>
+
+    <!-- Réinitialiser -->
+    <button
+      type="button"
+      (click)="reset()"
+      [disabled]="activeCount === 0 && !current.sort"
+      class="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg text-sm font-medium text-gray-600 hover:text-primary-700 hover:bg-primary-50 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+    >
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      Réinitialiser
+      <span *ngIf="activeCount > 0" class="px-1.5 py-0.5 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">{{ activeCount }}</span>
+    </button>
   </div>
-
-  <!-- Statut -->
-  <select class="block w-full lg:w-44 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
-    <option value="">Tous les statuts</option>
-    <option value="upcoming">À venir</option>
-    <option value="ongoing">En cours</option>
-    <option value="past">Terminé</option>
-    <option value="cancelled">Annulé</option>
-  </select>
-
-  <!-- Catégorie -->
-  <select class="block w-full lg:w-44 h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
-    <option value="">Toutes catégories</option>
-  </select>
-
-  <!-- Réinitialiser -->
-  <button
-    type="button"
-    class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-medium text-gray-600 hover:text-primary-700 hover:bg-primary-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-  >
-    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-    </svg>
-    Réinitialiser
-  </button>
 </div>

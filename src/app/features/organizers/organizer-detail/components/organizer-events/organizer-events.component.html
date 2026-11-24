@@ -1,0 +1,73 @@
+<div class="space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium text-gray-500">Publication</span>
+        <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white" role="group" aria-label="Publication">
+          <button
+            *ngFor="let p of publications"
+            type="button"
+            (click)="setStatus(p.key)"
+            [attr.aria-pressed]="status === p.key"
+            class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            [ngClass]="status === p.key ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-gray-700'"
+          >{{ p.label }}</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium text-gray-500">Période</span>
+        <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white" role="group" aria-label="Période">
+          <button
+            *ngFor="let p of periods"
+            type="button"
+            (click)="setPeriod(p.key)"
+            [attr.aria-pressed]="period === p.key"
+            class="h-8 px-3 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            [ngClass]="period === p.key ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-gray-700'"
+          >{{ p.label }}</button>
+        </div>
+      </div>
+    </div>
+
+    <a
+      *ngIf="canCreate"
+      routerLink="/events/new"
+      class="inline-flex items-center justify-center gap-2 bg-primary text-white px-4 h-9 rounded-lg font-medium text-sm hover:bg-primary-800 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+    >
+      <mat-icon class="!w-4 !h-4 !text-base">add</mat-icon>
+      Nouvel événement
+    </a>
+  </div>
+
+  <div *ngIf="isLoading && events.length === 0" class="py-16 flex justify-center"><app-loading></app-loading></div>
+
+  <div *ngIf="!isLoading && error" class="bg-white rounded-xl border border-gray-200 py-10 text-center px-6">
+    <p class="text-sm text-gray-700">{{ error }}</p>
+    <button
+      type="button"
+      (click)="load()"
+      class="mt-4 inline-flex items-center justify-center bg-primary text-white px-5 h-10 rounded-lg font-medium text-sm hover:bg-primary-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+    >Réessayer</button>
+  </div>
+
+  <div *ngIf="!error && !(isLoading && events.length === 0)" [class.opacity-60]="isLoading">
+    <div
+      *ngIf="itemsTotal === 0 && !isLoading"
+      class="bg-white rounded-xl border border-gray-200 py-12 text-center px-6 text-sm text-gray-500"
+    >
+      Aucun événement{{ hasFilter ? ' pour ces filtres' : '' }}.
+    </div>
+
+    <app-list-event
+      *ngIf="itemsTotal > 0"
+      [events]="events"
+      viewMode="grid"
+      [itemsTotal]="itemsTotal"
+      [currentPage]="page"
+      [pageSize]="pageSize"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-list-event>
+  </div>
+</div>

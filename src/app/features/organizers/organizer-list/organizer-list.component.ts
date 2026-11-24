@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 
 import { IMyOrganizer } from '@/app/_core/model';
@@ -12,7 +13,7 @@ type RoleTone = { classes: string; icon: string };
 
 @Component({
   selector: 'app-organizer-list',
-  imports: [CommonModule, RouterLink, MatIconModule, LoadingComponent],
+  imports: [MatTooltipModule, CommonModule, RouterLink, MatIconModule, LoadingComponent],
   templateUrl: './organizer-list.component.html',
   styles: ``,
 })

@@ -16,6 +16,7 @@ import { OrganizerService } from '@/app/_core/services/organizer/organizer.servi
 import { LocationService } from '@/app/_core/services/location/location.service';
 
 import { ICategory, IEvent, IOrganizer , ILocation } from '@/app/_core/model';
+import { NotificationService } from '@/app/_shared/services/notification.service';
 import { BtnLoadingComponent } from '@/app/_shared/components/btn-loading/btn-loading.component';
 
 
@@ -76,7 +77,8 @@ export class CreateEventComponent implements OnInit {
     private eventsService: EventsService,
     private categoryService: CategoryService,
     private organizerService: OrganizerService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit() {
@@ -319,7 +321,7 @@ export class CreateEventComponent implements OnInit {
     } catch (error) {
       console.error('Error creating event:', error);
       this.isSubmitting = false;
-      alert('An error occurred while creating the event. Please try again.');
+      this.notification.error("Impossible de créer l'événement. Veuillez réessayer.", 'Échec de la création');
     }
   }
 
